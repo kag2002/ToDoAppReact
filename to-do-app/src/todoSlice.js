@@ -1,51 +1,4 @@
-// src/todoSlice.js
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-
-// Async thunk for adding a todo
-export const addTodoAsync = createAsyncThunk(
-  "todos/addTodoAsync",
-  async ({ text, priority, dueDate }) => {
-    // Simulate an API call delay (e.g., 500ms)
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ text, priority, dueDate });
-      }, 500);
-    });
-  }
-);
-
-export const deleteTodoAsync = createAsyncThunk(
-  "todos/deleteTodoAsync",
-  async (id) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(id);
-      }, 500);
-    });
-  }
-);
-
-export const toggleTodoAsync = createAsyncThunk(
-  "todos/toggleTodoAsync",
-  async (id) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve(id);
-      }, 500);
-    });
-  }
-);
-
-export const editTodoAsync = createAsyncThunk(
-  "todos/editTodoAsync",
-  async ({ id, text, priority, dueDate }) => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({ id, text, priority, dueDate });
-      }, 500);
-    });
-  }
-);
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   todos: [],
@@ -54,28 +7,30 @@ const initialState = {
 const todoSlice = createSlice({
   name: "todos",
   initialState,
-  reducers: {},
-  extraReducers: (builder) => {
-    builder.addCase(addTodoAsync.fulfilled, (state, action) => {
+  reducers: {
+    addTodo: (state, action) => {
+      // Expect payload: { text, priority, dueDate }
       const { text, priority, dueDate } = action.payload;
       state.todos.push({
-        id: Date.now(),
+        id: Date.now(), // unique id based on timestamp
         text,
         priority,
-        dueDate,
+        dueDate, // formatted as "YYYY-MM-DD HH:mm" or null
         completed: false,
       });
-    });
-    builder.addCase(deleteTodoAsync.fulfilled, (state, action) => {
+    },
+    deleteTodo: (state, action) => {
+      // Filter out the todo with matching id from action.payload
       state.todos = state.todos.filter((todo) => todo.id !== action.payload);
-    });
-    builder.addCase(toggleTodoAsync.fulfilled, (state, action) => {
+    },
+    toggleTodo: (state, action) => {
       const todo = state.todos.find((todo) => todo.id === action.payload);
       if (todo) {
         todo.completed = !todo.completed;
       }
-    });
-    builder.addCase(editTodoAsync.fulfilled, (state, action) => {
+    },
+    editTodo: (state, action) => {
+      // Expect payload: { id, text, priority, dueDate }
       const { id, text, priority, dueDate } = action.payload;
       const todo = state.todos.find((todo) => todo.id === id);
       if (todo) {
@@ -83,8 +38,9 @@ const todoSlice = createSlice({
         todo.priority = priority;
         todo.dueDate = dueDate;
       }
-    });
+    },
   },
 });
 
+export const { addTodo, deleteTodo, toggleTodo, editTodo } = todoSlice.actions;
 export default todoSlice.reducer;

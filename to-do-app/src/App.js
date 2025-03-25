@@ -1,73 +1,122 @@
-// src/App.js
 import { useState, useEffect } from "react";
 import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  addTodoAsync,
-  deleteTodoAsync,
-  toggleTodoAsync,
-  editTodoAsync,
-} from "./todoSlice";
-import { Table, Radio, DatePicker, Row, Col, Input, Button, message } from "antd";
+import { addTodo, deleteTodo, toggleTodo, editTodo } from "./todoSlice";
+import { Table, Button, message } from "antd";
 import Statistics from "./components/Statistics";
 import PieCharts from "./components/PieChart";
 import AddTask from "./components/AddTask";
 import moment from "moment";
 import TodoDetailModal from "./components/TodoDetailModal";
+import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
 
 function App() {
+  const [messageApi, contextHolder] = message.useMessage();
+  const key = "updatable";
   const [text, setText] = useState("");
   const [priority, setPriority] = useState("normal");
   const [dueDate, setDueDate] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfirmDeleteVisible, setModalConfirmDeleteVisible] =
+    useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
-
-  useEffect(() => {
-    const interval = setInterval(() => setTick((prev) => prev + 1), 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // For tick (if used later) 
-  const [tick, setTick] = useState(0);
 
   const todos = useSelector((state) => state.todos.todos || state.todos);
   const dispatch = useDispatch();
 
-  const handleAddTodo = async () => {
-    if (text) {
-      const formattedDueDate = dueDate ? dueDate.format("YYYY-MM-DD HH:mm") : null;
-      try {
-        await dispatch(
-          addTodoAsync({ text, priority, dueDate: formattedDueDate })
-        ).unwrap();
-        message.success("Todo added successfully!");
+  // Auto refresh every minute (if needed)
+  useEffect(() => {
+    const interval = setInterval(() => {}, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleAddTodo = () => {
+    if (text.trim()) {
+      const formattedDueDate = dueDate
+        ? dueDate.format("YYYY-MM-DD HH:mm")
+        : null;
+      messageApi.open({
+        key,
+        type: "loading",
+        content: "Adding todo...",
+      });
+      dispatch(addTodo({ text, priority, dueDate: formattedDueDate }));
+      setTimeout(() => {
+        messageApi.open({
+          key,
+          type: "success",
+          content: "Todo added successfully!",
+          duration: 2,
+        });
         clearFields();
-      } catch (error) {
-        message.error("Failed to add todo.");
-      }
+      }, 500);
+    } else {
+      messageApi.warning({
+        content: "Task description cannot be empty!",
+        duration: 2,
+      });
     }
   };
 
-  // Clear input fields
+  const handleDeleteTodo = (id) => {
+    messageApi.open({
+      key,
+      type: "loading",
+      content: "Deleting todo...",
+    });
+    dispatch(deleteTodo(id));
+    setTimeout(() => {
+      messageApi.open({
+        key,
+        type: "success",
+        content: "Todo deleted successfully!",
+        duration: 2,
+      });
+    }, 500);
+  };
+
+  const handleToggleTodo = (id) => {
+    messageApi.open({
+      key,
+      type: "loading",
+      content: "Updating status...",
+    });
+    dispatch(toggleTodo(id));
+    setTimeout(() => {
+      messageApi.open({
+        key,
+        type: "success",
+        content: "Status updated successfully!",
+        duration: 2,
+      });
+    }, 500);
+  };
+
+  const handleSaveEdit = (updatedRecord) => {
+    messageApi.open({
+      key,
+      type: "loading",
+      content: "Saving changes...",
+    });
+    dispatch(editTodo(updatedRecord));
+    setTimeout(() => {
+      messageApi.open({
+        key,
+        type: "success",
+        content: "Todo updated successfully!",
+        duration: 2,
+      });
+      setModalVisible(false);
+      setSelectedRecord(null);
+    }, 500);
+  };
+
   const clearFields = () => {
     setText("");
     setDueDate(null);
     setPriority("normal");
   };
 
-  // Handle updated record from TodoDetailModal
-  const handleSaveEdit = async (updatedRecord) => {
-    try {
-      await dispatch(editTodoAsync(updatedRecord)).unwrap();
-      message.success("Todo updated successfully!");
-      setModalVisible(false);
-      setSelectedRecord(null);
-    } catch (error) {
-      message.error("Failed to update todo.");
-    }
-  };
-
-  // Map todos for the Table
   const dataSource = todos.map((todo) => ({
     id: todo.id,
     key: todo.id,
@@ -85,7 +134,9 @@ function App() {
       sorter: (a, b) => a.text.localeCompare(b.text),
       sortDirections: ["descend", "ascend"],
       render: (text, record) => (
-        <span style={{ textDecoration: record.completed ? "line-through" : "none" }}>
+        <span
+          style={{ textDecoration: record.completed ? "line-through" : "none" }}
+        >
           {text}
         </span>
       ),
@@ -144,26 +195,15 @@ function App() {
       render: (_, record) => (
         <>
           <Button
-            onClick={async () => {
-              try {
-                await dispatch(toggleTodoAsync(record.id)).unwrap();
-                message.success("Status updated successfully!");
-              } catch (error) {
-                message.error("Failed to update status.");
-              }
-            }}
+            onClick={() => handleToggleTodo(record.key)}
             style={{ marginRight: 4 }}
           >
             {record.completed ? "Mark as Undone" : "Mark as Done"}
           </Button>
           <Button
-            onClick={async () => {
-              try {
-                await dispatch(deleteTodoAsync(record.id)).unwrap();
-                message.success("Todo deleted successfully!");
-              } catch (error) {
-                message.error("Failed to delete todo.");
-              }
+            onClick={() => {
+              setSelectedRecord(record);
+              setModalConfirmDeleteVisible(true);
             }}
             style={{ marginRight: 4 }}
           >
@@ -191,16 +231,26 @@ function App() {
       moment(todo.dueDate, "YYYY-MM-DD HH:mm").isBefore(moment()) &&
       !todo.completed
   ).length;
+
   const pieData = [
-    { name: "High", value: todos.filter((todo) => todo.priority === "high").length },
-    { name: "Normal", value: todos.filter((todo) => todo.priority === "normal").length },
-    { name: "Low", value: todos.filter((todo) => todo.priority === "low").length },
+    {
+      name: "High",
+      value: todos.filter((todo) => todo.priority === "high").length,
+    },
+    {
+      name: "Normal",
+      value: todos.filter((todo) => todo.priority === "normal").length,
+    },
+    {
+      name: "Low",
+      value: todos.filter((todo) => todo.priority === "low").length,
+    },
   ];
 
   return (
     <div style={{ padding: "20px" }}>
+      {contextHolder}
       <h1>Todo App</h1>
-      {/* Statistics component */}
       <Statistics
         total={totalTasks}
         completed={completedTasks}
@@ -209,7 +259,6 @@ function App() {
       />
       <br />
       <hr style={{ margin: "0 250px" }} />
-      {/* Add Task component */}
       <AddTask
         text={text}
         setText={setText}
@@ -221,7 +270,6 @@ function App() {
         clearFields={clearFields}
       />
       <br />
-      {/* Table with todos */}
       <Table
         dataSource={dataSource}
         columns={columns}
@@ -234,12 +282,17 @@ function App() {
         overdue={overdueTasks}
         pieData={pieData}
       />
-      {/* Todo Detail Modal */}
       <TodoDetailModal
         visible={modalVisible}
         record={selectedRecord}
         onClose={() => setModalVisible(false)}
         onSaveEdit={handleSaveEdit}
+      />
+      <ConfirmDeleteModal
+        visible={modalConfirmDeleteVisible}
+        record={selectedRecord}
+        onClose={() => setModalConfirmDeleteVisible(false)}
+        onDelete={handleDeleteTodo}
       />
     </div>
   );
