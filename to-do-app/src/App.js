@@ -9,6 +9,7 @@ import AddTask from "./components/AddTask";
 import moment from "moment";
 import TodoDetailModal from "./components/TodoDetailModal";
 import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
+import TaskTextDisplay from "./components/TaskTextDisplay"; // Import component TaskTextDisplay
 
 function App() {
   const [messageApi, contextHolder] = message.useMessage();
@@ -17,14 +18,13 @@ function App() {
   const [priority, setPriority] = useState("normal");
   const [dueDate, setDueDate] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalConfirmDeleteVisible, setModalConfirmDeleteVisible] =
-    useState(false);
+  const [modalConfirmDeleteVisible, setModalConfirmDeleteVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
 
   const todos = useSelector((state) => state.todos.todos || state.todos);
   const dispatch = useDispatch();
 
-  // Auto refresh every minute (if needed)
+  // Auto refresh every minute (nếu cần)
   useEffect(() => {
     const interval = setInterval(() => {}, 60000);
     return () => clearInterval(interval);
@@ -32,24 +32,31 @@ function App() {
 
   const handleAddTodo = () => {
     if (text.trim()) {
-      const formattedDueDate = dueDate
-        ? dueDate.format("YYYY-MM-DD HH:mm")
-        : null;
       messageApi.open({
         key,
         type: "loading",
         content: "Adding todo...",
       });
-      dispatch(addTodo({ text, priority, dueDate: formattedDueDate }));
-      setTimeout(() => {
+      const formattedDueDate = dueDate ? dueDate.format("YYYY-MM-DD HH:mm") : null;
+      try {
+        dispatch(addTodo({ text, priority, dueDate: formattedDueDate }));
+        setTimeout(() => {
+          messageApi.open({
+            key,
+            type: "success",
+            content: "Todo added successfully!",
+            duration: 2,
+          });
+          clearFields();
+        }, 500);
+      } catch (error) {
         messageApi.open({
           key,
-          type: "success",
-          content: "Todo added successfully!",
+          type: "error",
+          content: "Failed to add todo!",
           duration: 2,
         });
-        clearFields();
-      }, 500);
+      }
     } else {
       messageApi.warning({
         content: "Task description cannot be empty!",
@@ -64,15 +71,24 @@ function App() {
       type: "loading",
       content: "Deleting todo...",
     });
-    dispatch(deleteTodo(id));
-    setTimeout(() => {
+    try {
+      dispatch(deleteTodo(id));
+      setTimeout(() => {
+        messageApi.open({
+          key,
+          type: "success",
+          content: "Todo deleted successfully!",
+          duration: 2,
+        });
+      }, 500);
+    } catch (error) {
       messageApi.open({
         key,
-        type: "success",
-        content: "Todo deleted successfully!",
+        type: "error",
+        content: "Failed to delete todo!",
         duration: 2,
       });
-    }, 500);
+    }
   };
 
   const handleToggleTodo = (id) => {
@@ -81,15 +97,24 @@ function App() {
       type: "loading",
       content: "Updating status...",
     });
-    dispatch(toggleTodo(id));
-    setTimeout(() => {
+    try {
+      dispatch(toggleTodo(id));
+      setTimeout(() => {
+        messageApi.open({
+          key,
+          type: "success",
+          content: "Status updated successfully!",
+          duration: 2,
+        });
+      }, 500);
+    } catch (error) {
       messageApi.open({
         key,
-        type: "success",
-        content: "Status updated successfully!",
+        type: "error",
+        content: "Failed to update status!",
         duration: 2,
       });
-    }, 500);
+    }
   };
 
   const handleSaveEdit = (updatedRecord) => {
@@ -98,17 +123,26 @@ function App() {
       type: "loading",
       content: "Saving changes...",
     });
-    dispatch(editTodo(updatedRecord));
-    setTimeout(() => {
+    try {
+      dispatch(editTodo(updatedRecord));
+      setTimeout(() => {
+        messageApi.open({
+          key,
+          type: "success",
+          content: "Todo updated successfully!",
+          duration: 2,
+        });
+        setModalVisible(false);
+        setSelectedRecord(null);
+      }, 500);
+    } catch (error) {
       messageApi.open({
         key,
-        type: "success",
-        content: "Todo updated successfully!",
+        type: "error",
+        content: "Failed to update todo!",
         duration: 2,
       });
-      setModalVisible(false);
-      setSelectedRecord(null);
-    }, 500);
+    }
   };
 
   const clearFields = () => {
@@ -134,11 +168,7 @@ function App() {
       sorter: (a, b) => a.text.localeCompare(b.text),
       sortDirections: ["descend", "ascend"],
       render: (text, record) => (
-        <span
-          style={{ textDecoration: record.completed ? "line-through" : "none" }}
-        >
-          {text}
-        </span>
+        <TaskTextDisplay text={text} completed={record.completed} record={record} />
       ),
     },
     {
@@ -233,18 +263,9 @@ function App() {
   ).length;
 
   const pieData = [
-    {
-      name: "High",
-      value: todos.filter((todo) => todo.priority === "high").length,
-    },
-    {
-      name: "Normal",
-      value: todos.filter((todo) => todo.priority === "normal").length,
-    },
-    {
-      name: "Low",
-      value: todos.filter((todo) => todo.priority === "low").length,
-    },
+    { name: "High", value: todos.filter((todo) => todo.priority === "high").length },
+    { name: "Normal", value: todos.filter((todo) => todo.priority === "normal").length },
+    { name: "Low", value: todos.filter((todo) => todo.priority === "low").length },
   ];
 
   return (

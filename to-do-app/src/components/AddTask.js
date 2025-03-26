@@ -2,6 +2,8 @@
 import React from "react";
 import { Input, Button, Radio, DatePicker, Row, Col } from "antd";
 
+const { TextArea } = Input;
+
 const AddTask = ({
   text,
   setText,
@@ -20,11 +22,12 @@ const AddTask = ({
           <div style={{ marginBottom: 4, fontSize: "12px", color: "#888" }}>
             Task content
           </div>
-          <Input
-            style={{ width: 300 }}
+          <TextArea
+            style={{ width: 300, minHeight: 100 }}
             placeholder="Enter a task"
             value={text}
             onChange={(e) => setText(e.target.value)}
+            autoSize={{ minRows: 3, maxRows: 5 }}
           />
         </Col>
         <Col xs={24} sm={8} md={6}>
