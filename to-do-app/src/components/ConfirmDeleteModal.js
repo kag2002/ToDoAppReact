@@ -45,7 +45,12 @@ const ConfirmDeleteModal = ({ record, visible, onClose, onDelete }) => {
           <Text>{priority}</Text>
         </div>
         <div style={{ textAlign: "right" }}>
-          <Button onClick={handleCancelDelete} style={{ marginRight: 8 }}>
+          <Button
+            color="primary"
+            variant="solid"
+            onClick={handleCancelDelete}
+            style={{ marginRight: 8 }}
+          >
             Cancel
           </Button>
           <Button

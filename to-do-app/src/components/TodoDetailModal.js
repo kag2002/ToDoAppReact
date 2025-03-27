@@ -91,6 +91,8 @@ const TodoDetailModal = ({ visible, record, onClose, onSaveEdit }) => {
             </div>
             <div style={{ textAlign: "right" }}>
               <Button
+                color="primary"
+                variant="solid"
                 onClick={() => setEditMode(false)}
                 style={{ marginRight: 8 }}
               >
@@ -130,7 +132,12 @@ const TodoDetailModal = ({ visible, record, onClose, onSaveEdit }) => {
               </p>
             </div>
             <div style={{ textAlign: "right" }}>
-              <Button onClick={onClose} style={{ marginRight: 8 }}>
+              <Button
+                color="primary"
+                variant="solid"
+                onClick={onClose}
+                style={{ marginRight: 8 }}
+              >
                 Close
               </Button>
               <Button type="primary" onClick={() => setEditMode(true)}>

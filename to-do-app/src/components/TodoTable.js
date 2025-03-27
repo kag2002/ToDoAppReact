@@ -37,9 +37,11 @@ const DraggableBodyRow = (props) => {
   // Remove the default first cell (which belongs to the drag column) and replace it with our handle.
   return (
     <tr ref={setNodeRef} style={style} {...attributes}>
-      <td style={{ cursor: "grab", width: 30 }} {...listeners}>
-        ☰
-      </td>
+      {children.length > 0 && (
+        <td style={{ cursor: "grab", width: 30 }} {...listeners}>
+          ☰
+        </td>
+      )}
       {
         // Remove the first cell provided by Ant Design's default rendering (it corresponds to our drag column)
         Array.isArray(children) && children.length > 0
