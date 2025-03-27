@@ -15,7 +15,7 @@ const todoSlice = createSlice({
         id: Date.now(), // unique id based on timestamp
         text,
         priority,
-        dueDate, // formatted as "YYYY-MM-DD HH:mm" or null
+        dueDate,
         completed: false,
       });
     },

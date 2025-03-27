@@ -1,7 +1,7 @@
 // src/components/AddTask.js
 import React from "react";
 import { Input, Button, Radio, DatePicker, Row, Col } from "antd";
-
+import { DATE_FORMAT } from "../constants/config";
 const { TextArea } = Input;
 
 const AddTask = ({
@@ -49,7 +49,7 @@ const AddTask = ({
           </div>
           <DatePicker
             showTime
-            format="YYYY-MM-DD HH:mm"
+            format={DATE_FORMAT}
             value={dueDate}
             onChange={(date) => setDueDate(date)}
           />
@@ -60,7 +60,9 @@ const AddTask = ({
           </Button>
           <br />
           <br />
-          <Button color="danger" variant="solid" onClick={clearFields}>Clear</Button>
+          <Button color="danger" variant="solid" onClick={clearFields}>
+            Clear
+          </Button>
         </Col>
       </Row>
     </>

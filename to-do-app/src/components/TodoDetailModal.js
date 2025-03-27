@@ -1,4 +1,3 @@
-// src/components/TodoDetailModal.js
 import React, { useState, useEffect } from "react";
 import {
   Modal,
@@ -9,7 +8,10 @@ import {
   Radio,
   DatePicker,
 } from "antd";
-import moment from "moment";
+import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+import { DATE_FORMAT } from "../constants/config";
+dayjs.extend(customParseFormat);
 
 const { Title, Text } = Typography;
 
@@ -19,27 +21,21 @@ const TodoDetailModal = ({ visible, record, onClose, onSaveEdit }) => {
   const [editPriority, setEditPriority] = useState("normal");
   const [editDueDate, setEditDueDate] = useState(null);
 
-  // Update modal state when record changes
   useEffect(() => {
     if (record) {
-      setEditText(record.text);
+      setEditText(record.text || "");
       setEditPriority(record.priority || "normal");
       setEditDueDate(
-        record.dueDate ? moment(record.dueDate, "YYYY-MM-DD HH:mm") : null
+        record.dueDate ? dayjs(record.dueDate, DATE_FORMAT) : null
       );
-      setEditMode(false); // Default to view mode
+      setEditMode(false);
     }
   }, [record]);
 
-  const handleEditClick = () => {
-    setEditMode(true);
-  };
-
   const handleSaveClick = () => {
     const formattedDueDate = editDueDate
-      ? editDueDate.format("YYYY-MM-DD HH:mm")
+      ? editDueDate.format(DATE_FORMAT)
       : null;
-
     onSaveEdit({
       id: record.key,
       ...record,
@@ -86,10 +82,11 @@ const TodoDetailModal = ({ visible, record, onClose, onSaveEdit }) => {
               <Text strong>Due Date & Time &nbsp;&ensp;</Text>
               <DatePicker
                 showTime
-                format="YYYY-MM-DD HH:mm"
+                format={DATE_FORMAT}
                 value={editDueDate}
-                onChange={(date) => setEditDueDate(date)}
+                onChange={setEditDueDate}
                 style={{ marginTop: 8 }}
+                inputReadOnly
               />
             </div>
             <div style={{ textAlign: "right" }}>
@@ -126,13 +123,17 @@ const TodoDetailModal = ({ visible, record, onClose, onSaveEdit }) => {
             </div>
             <div style={{ marginBottom: 16 }}>
               <Text strong>Due Date & Time:</Text>
-              <p>{record?.dueDate ? record.dueDate : "-"}</p>
+              <p>
+                {record?.dueDate
+                  ? dayjs(record.dueDate, DATE_FORMAT).format(DATE_FORMAT)
+                  : "-"}
+              </p>
             </div>
             <div style={{ textAlign: "right" }}>
               <Button onClick={onClose} style={{ marginRight: 8 }}>
                 Close
               </Button>
-              <Button type="primary" onClick={handleEditClick}>
+              <Button type="primary" onClick={() => setEditMode(true)}>
                 Edit
               </Button>
             </div>
