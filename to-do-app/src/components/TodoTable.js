@@ -20,7 +20,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-// Custom draggable row with drag handle icon cell
+// Custom draggable row with drag handle icon cell at the end
 const DraggableBodyRow = (props) => {
   const { children, ...restProps } = props;
   const { attributes, listeners, setNodeRef, transform, transition } =
@@ -33,21 +33,18 @@ const DraggableBodyRow = (props) => {
     transition,
   };
 
-  // Render a custom cell for the drag handle
-  // Remove the default first cell (which belongs to the drag column) and replace it with our handle.
   return (
     <tr ref={setNodeRef} style={style} {...attributes}>
-      {children.length > 0 && (
-        <td style={{ cursor: "grab", width: 30 }} {...listeners}>
-          ☰
-        </td>
+      {Array.isArray(children) && children.length > 0 ? (
+        <>
+          {children.slice(0, children.length - 1)}
+          <td style={{ cursor: "grab", width: 30 }} {...listeners}>
+            ☰
+          </td>
+        </>
+      ) : (
+        children
       )}
-      {
-        // Remove the first cell provided by Ant Design's default rendering (it corresponds to our drag column)
-        Array.isArray(children) && children.length > 0
-          ? children.slice(1)
-          : children
-      }
     </tr>
   );
 };
@@ -59,35 +56,28 @@ const TodoTable = ({
   onEditClick,
   onReorder,
 }) => {
-  // Local state for maintaining row order
   const [data, setData] = useState(todos);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
 
   useEffect(() => {
     setData(todos);
   }, [todos]);
 
-  const sortByText = (a, b) => a.text.localeCompare(b.text);
-
-  const sortByDate = (a, b) => {
-    if (!a.dueDate) return 1;
-    if (!b.dueDate) return -1;
-    return moment(a.dueDate, DATE_FORMAT).diff(moment(b.dueDate, DATE_FORMAT));
+  // Configure built-in row selection from antd
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+    },
   };
 
-  // Add a new column at the beginning for the drag handle
+  // Columns definition (drag column moved to the end)
   const columns = [
-    {
-      title: "",
-      dataIndex: "drag",
-      key: "drag",
-      width: 30,
-      render: () => null, // empty cell; the drag handle is rendered in the custom row component
-    },
     {
       title: "Task",
       dataIndex: "text",
       key: "text",
-      sorter: sortByText,
+      sorter: (a, b) => a.text.localeCompare(b.text),
       sortDirections: ["descend", "ascend"],
       render: (text, record) => (
         <TaskTextDisplay
@@ -117,7 +107,13 @@ const TodoTable = ({
       title: "Due Date & Time",
       dataIndex: "dueDate",
       key: "dueDate",
-      sorter: sortByDate,
+      sorter: (a, b) => {
+        if (!a.dueDate) return 1;
+        if (!b.dueDate) return -1;
+        return moment(a.dueDate, DATE_FORMAT).diff(
+          moment(b.dueDate, DATE_FORMAT)
+        );
+      },
       sortDirections: ["descend", "ascend"],
       render: (dueDate, record) => {
         if (!dueDate) return "-";
@@ -163,9 +159,16 @@ const TodoTable = ({
         </>
       ),
     },
+    {
+      title: "",
+      dataIndex: "drag",
+      key: "drag",
+      width: 30,
+      render: () => null, // drag handle is rendered in the custom row component
+    },
   ];
 
-  // Handler for drag end event
+  // Handler for drag end event remains unchanged
   const handleDragEnd = (event) => {
     const { active, over } = event;
     if (active.id !== over.id) {
@@ -173,7 +176,6 @@ const TodoTable = ({
       const newIndex = data.findIndex((item) => item.key === over.id);
       const newData = arrayMove(data, oldIndex, newIndex);
       setData(newData);
-      // Optional: notify parent component about reordering
       if (onReorder) {
         onReorder(newData);
       }
@@ -187,6 +189,7 @@ const TodoTable = ({
         strategy={verticalListSortingStrategy}
       >
         <Table
+          rowSelection={rowSelection}
           dataSource={data}
           columns={columns}
           pagination={TABLE_PAGINATION}
