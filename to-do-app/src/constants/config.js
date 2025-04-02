@@ -4,4 +4,4 @@ export const TABLE_PAGINATION = {
 
 export const MODAL_WIDTH = 600;
 
-export const DATE_FORMAT = "MM/DD/YYYY HH:mm";
+export const DATE_FORMAT = "DD/MM/YYYY HH:mm";

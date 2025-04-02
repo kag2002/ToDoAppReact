@@ -1,6 +1,5 @@
-export * from './messages';
-export * from './validation';
-export * from './config';
+export * from "./validation";
+export * from "./config";
 
 export const MESSAGE_KEY = "updatable";
 export const MESSAGE_DURATION = 2;
@@ -22,4 +21,4 @@ export const TABLE_PAGINATION = {
   pageSize: 5,
 };
 
-export const MODAL_WIDTH = 600; 
+export const MODAL_WIDTH = 600;
